@@ -1,0 +1,7 @@
+# Directorio de Salida
+
+Este directorio almacena las imágenes generadas por el sistema de inferencia.
+
+Las imágenes se guardan en formato PNG con nomenclatura estructurada que identifica los parámetros de generación.
+
+**Nota:** Este archivo mantiene el directorio bajo control de versiones sin incluir las imágenes generadas.

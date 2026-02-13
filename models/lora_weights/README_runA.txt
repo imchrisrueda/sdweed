@@ -1,0 +1,10 @@
+model_id: runwayml/stable-diffusion-v1-5
+resolution: 256
+rank: 16
+lr: 1e-4
+batch: 16
+grad_accum: 1
+max_steps: 3000
+reg_prob: 0.0
+late_prob: 0.40
+seed: 1234
