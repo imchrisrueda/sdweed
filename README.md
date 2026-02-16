@@ -245,14 +245,11 @@ Ver [`requirements.txt`](requirements.txt) para lista completa.
 
 Este proyecto es parte de un sistema de investigación en agricultura de precisión. Para contribuciones o reportes de problemas, seguir las directrices estándar de desarrollo colaborativo.
 
-## Licencia
-
-[Especificar licencia según requerimientos institucionales]
-
 ## Contacto
 
-[Información de contacto del equipo de investigación]
+Christian Rueda-Ayala 
+christian.rueda@csic.es
 
 ---
 
-**Nota**: Este sistema ha sido diseñado para fines de investigación científica en agricultura de precisión y computer vision aplicada al sector agrícola.
+**Nota**: Este trabajo ha sido desarrollado como prueba de concepto para el análisis de factibilidad sobre el uso de imágenes generadas para detección de malas hierbas en cultivos.
