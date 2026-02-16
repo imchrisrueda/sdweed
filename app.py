@@ -114,7 +114,10 @@ def main():
     st.title("🌾 Generación de Imágenes Agrícolas Sintéticas")
     st.markdown("""
         Sistema de inferencia basado en **Stable Diffusion v1.5** con adaptación **LoRA** 
-        para generación de imágenes fotorrealistas de cultivos desde perspectiva aérea.
+        para generación de imágenes fotorrealistas de plántulas desde perspectiva nadir (orthophoto).
+        
+        🌱 **Optimizado para**: Sorghum seedling con vista cenital perpendicular  
+        🎨 **Tema**: Modo claro sobrio con colores naturales
     """)
     
     # Sidebar - Información del sistema
@@ -132,7 +135,9 @@ def main():
         st.info(f"""
         **Modelo Base:** SD v1.5  
         **Adaptación:** LoRA especializado  
-        **Resolución:** 512×512 px
+        **Resolución:** 512×512 px  
+        **Enfoque:** Nadir orthophoto  
+        **Optimizado:** Sorghum seedling
         """)
         
         st.divider()
@@ -164,12 +169,42 @@ def main():
         col1, col2 = st.columns([2, 1])
         
         with col1:
+            # Etiquetas descriptivas para presets
+            preset_labels = [
+                "🌱 Sorghum Orthophoto (Óptimo)",
+                "🌽 Maize Plant",
+                "🌿 Atriplex Plant",
+                "🌱 Generic Seedling"
+            ]
+            
+            # Selector de prompt predefinido
+            prompt_preset = st.selectbox(
+                "Prompt Predefinido",
+                options=["Personalizado"] + preset_labels,
+                help="Selecciona un prompt plant-centric predefinido o personalizado"
+            )
+            
+            # Determinar prompt inicial
+            if prompt_preset == "Personalizado":
+                initial_prompt = InferenceConfig.DEFAULT_PROMPT
+            else:
+                preset_idx = preset_labels.index(prompt_preset)
+                initial_prompt = InferenceConfig.DEFAULT_PROMPTS[preset_idx]
+            
             # Input de prompt
             prompt_simple = st.text_area(
                 "Prompt de Generación",
-                value=InferenceConfig.DEFAULT_PROMPT,
-                height=100,
-                help="Descripción textual de la imagen a generar"
+                value=initial_prompt,
+                height=120,
+                help="Descripción textual de la imagen a generar (nadir orthophoto para óptimos resultados)"
+            )
+            
+            # Negative prompt
+            negative_prompt_simple = st.text_area(
+                "Negative Prompt",
+                value=InferenceConfig.NEGATIVE_PROMPT,
+                height=80,
+                help="Características a evitar (texturas no deseadas, vistas panorámicas, etc.)"
             )
             
             # Expander para parámetros avanzados
@@ -189,7 +224,7 @@ def main():
                         "Guidance Scale",
                         min_value=1.0,
                         max_value=20.0,
-                        value=7.5,
+                        value=7.0,
                         step=0.5,
                         help="Factor de adherencia al prompt"
                     )
@@ -206,11 +241,11 @@ def main():
                     
                     lora_weight_simple = st.slider(
                         "Peso LoRA",
-                        min_value=0.1,
+                        min_value=0.0,
                         max_value=1.0,
-                        value=0.3,
-                        step=0.05,
-                        help="Intensidad de la adaptación LoRA"
+                        value=1.0,
+                        step=0.1,
+                        help="Intensidad de la adaptación LoRA (1.0 = máxima influencia)"
                     )
         
         with col2:
@@ -244,6 +279,7 @@ def main():
                 # Generar imagen
                 image = inference.generate_image(
                     prompt=prompt_simple,
+                    negative_prompt=negative_prompt_simple,
                     seed=int(seed_simple),
                     num_inference_steps=int(steps_simple),
                     guidance_scale=float(guidance_simple),
@@ -304,11 +340,43 @@ def main():
         st.header("Comparación Base vs LoRA")
         st.markdown("Genera imágenes comparativas entre el modelo base y el adaptado con LoRA.")
         
+        # Etiquetas descriptivas para presets
+        preset_labels_compare = [
+            "🌱 Sorghum Orthophoto (Óptimo)",
+            "🌽 Maize Plant",
+            "🌿 Atriplex Plant",
+            "🌱 Generic Seedling"
+        ]
+        
+        # Selector de prompt predefinido
+        prompt_preset_compare = st.selectbox(
+            "Prompt Predefinido",
+            options=["Personalizado"] + preset_labels_compare,
+            help="Selecciona un prompt plant-centric predefinido o personalizado",
+            key="preset_compare"
+        )
+        
+        # Determinar prompt inicial
+        if prompt_preset_compare == "Personalizado":
+            initial_prompt_compare = InferenceConfig.DEFAULT_PROMPT
+        else:
+            preset_idx = preset_labels_compare.index(prompt_preset_compare)
+            initial_prompt_compare = InferenceConfig.DEFAULT_PROMPTS[preset_idx]
+        
         prompt_compare = st.text_area(
             "Prompt de Generación",
-            value=InferenceConfig.DEFAULT_PROMPT,
-            height=100,
+            value=initial_prompt_compare,
+            height=120,
             key="prompt_compare"
+        )
+        
+        # Negative prompt
+        negative_prompt_compare = st.text_area(
+            "Negative Prompt",
+            value=InferenceConfig.NEGATIVE_PROMPT,
+            height=80,
+            help="Características a evitar (texturas no deseadas, vistas panorámicas, etc.)",
+            key="negative_compare"
         )
         
         col1, col2 = st.columns(2)
@@ -325,11 +393,12 @@ def main():
         with col2:
             lora_weight_compare = st.slider(
                 "Peso LoRA",
-                min_value=0.1,
+                min_value=0.0,
                 max_value=1.0,
-                value=0.3,
-                step=0.05,
-                key="lora_weight_compare"
+                value=1.0,
+                step=0.1,
+                key="lora_weight_compare",
+                help="Intensidad de la adaptación LoRA (1.0 = máxima influencia)"
             )
         
         if st.button("🔄 Generar Comparación", key="gen_compare"):
@@ -347,6 +416,7 @@ def main():
                     inference.initialize_pipeline(load_lora=False)
                     img_base = inference.generate_image(
                         prompt=prompt_compare,
+                        negative_prompt=negative_prompt_compare,
                         seed=int(seed_compare),
                     )
                     
@@ -363,6 +433,7 @@ def main():
                     
                     img_lora = inference.generate_image(
                         prompt=prompt_compare,
+                        negative_prompt=negative_prompt_compare,
                         seed=int(seed_compare),
                     )
                     

@@ -87,8 +87,8 @@ class StableDiffusionInference:
         base a la generación de imágenes agrícolas con características morfológicas
         coherentes y control semántico mejorado.
         
-        Nota: Este método es compatible con formatos antiguos y nuevos de pesos LoRA.
-        Fusiona los pesos directamente en el UNet para máxima compatibilidad.
+        Este método utiliza load_lora_weights() seguido de set_adapters() para
+        controlar el peso de influencia del adaptador LoRA.
         """
         if self.pipe is None:
             raise RuntimeError("Pipeline debe ser inicializado antes de cargar LoRA")
@@ -96,20 +96,23 @@ class StableDiffusionInference:
         # Cargar pesos LoRA desde archivo
         self.pipe.load_lora_weights(str(self.config.LORA_WEIGHTS_PATH))
         
-        # Fusionar los pesos LoRA con el modelo base usando el scale configurado
-        # Este método es compatible con formatos antiguos y no requiere PEFT
-        lora_scale = self.config.LORA_ADAPTER_WEIGHTS[0]
-        self.pipe.fuse_lora(lora_scale=lora_scale)
+        # Configurar peso del adaptador LoRA (1.0 = máxima influencia)
+        adapter_weight = self.config.LORA_ADAPTER_WEIGHTS[0]
+        try:
+            self.pipe.set_adapters(['default'], adapter_weights=[adapter_weight])
+            print(f'[OK] set_adapters(default, {adapter_weight})')
+        except Exception as e:
+            print(f'[WARN] set_adapters not available: {e}')
         
         self.lora_loaded = True
-        self.lora_scale = lora_scale
+        self.lora_scale = adapter_weight
     
     def update_lora_scale(self, new_scale: float) -> None:
         """
         Actualiza el peso de influencia de LoRA sin recargar todo el pipeline.
         
         Args:
-            new_scale: Nuevo peso de LoRA (típicamente entre 0.1 y 1.0).
+            new_scale: Nuevo peso de LoRA (típicamente entre 0.0 y 1.0).
         
         Raises:
             RuntimeError: Si el pipeline no ha sido inicializado con LoRA.
@@ -120,19 +123,19 @@ class StableDiffusionInference:
         if self.lora_scale == new_scale:
             return  # No es necesario actualizar
         
-        # Desfusionar los pesos actuales
-        self.pipe.unfuse_lora()
-        
-        # Fusionar con el nuevo scale
-        self.pipe.fuse_lora(lora_scale=new_scale)
-        self.lora_scale = new_scale
-        
-        # Actualizar configuración
-        self.config.LORA_ADAPTER_WEIGHTS = [new_scale]
+        # Actualizar peso del adaptador
+        try:
+            self.pipe.set_adapters(['default'], adapter_weights=[new_scale])
+            self.lora_scale = new_scale
+            self.config.LORA_ADAPTER_WEIGHTS = [new_scale]
+            print(f'[OK] Updated adapter weight to {new_scale}')
+        except Exception as e:
+            print(f'[WARN] Could not update adapter weight: {e}')
     
     def generate_image(
         self,
         prompt: str,
+        negative_prompt: Optional[str] = None,
         seed: Optional[int] = None,
         num_inference_steps: Optional[int] = None,
         guidance_scale: Optional[float] = None,
@@ -148,6 +151,7 @@ class StableDiffusionInference:
         
         Args:
             prompt: Descripción textual de la imagen a generar.
+            negative_prompt: Características a evitar en la generación (opcional).
             seed: Semilla para reproducibilidad (opcional).
             num_inference_steps: Número de pasos de denoising (opcional).
             guidance_scale: Factor de guiado classifier-free (opcional).
@@ -164,6 +168,7 @@ class StableDiffusionInference:
             raise RuntimeError("Pipeline no inicializado. Ejecute initialize_pipeline() primero.")
         
         # Usar valores por defecto si no se especifican
+        negative_prompt = negative_prompt or self.config.NEGATIVE_PROMPT
         num_inference_steps = num_inference_steps or self.config.DEFAULT_INFERENCE_PARAMS["num_inference_steps"]
         guidance_scale = guidance_scale or self.config.DEFAULT_INFERENCE_PARAMS["guidance_scale"]
         height = height or self.config.DEFAULT_INFERENCE_PARAMS["height"]
@@ -176,6 +181,7 @@ class StableDiffusionInference:
         # Ejecutar pipeline de inferencia
         output = self.pipe(
             prompt=prompt,
+            negative_prompt=negative_prompt,
             num_inference_steps=num_inference_steps,
             guidance_scale=guidance_scale,
             generator=generator,

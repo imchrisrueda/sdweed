@@ -3,10 +3,18 @@
 # Script de inicio rápido para la aplicación web de generación de imágenes
 # Autor: Sistema de Inferencia SD + LoRA
 # Descripción: Inicializa y ejecuta la aplicación Streamlit con configuración óptima
+# Versión: 2.0 (Plant-Centric Update)
 
 echo "=============================================="
 echo "  Generación de Imágenes Agrícolas - SD LoRA"
+echo "  Versión 2.0 - Plant-Centric Update"
 echo "=============================================="
+echo ""
+echo "✨ Nuevas Características:"
+echo "  • 4 prompts plant-centric predefinidos"
+echo "  • Negative prompts configurables"
+echo "  • Peso LoRA ajustable (0.0 - 1.0)"
+echo "  • Enfoque en plantas individuales"
 echo ""
 
 # Verificar que se está en el directorio correcto
@@ -61,6 +69,11 @@ echo ""
 echo "Acceso manual:"
 echo "  - Local: http://localhost:8501"
 echo "  - Red: http://$(hostname -I | awk '{print $1}'):8501"
+echo ""
+echo "💡 Otros scripts disponibles:"
+echo "  • python scripts/generate_comparison_batch.py  (generación batch base vs LoRA)"
+echo "  • python scripts/generate_images.py            (generación simple)"
+echo "  • python scripts/test_inference.py             (testing del pipeline)"
 echo ""
 echo "Presione Ctrl+C para detener la aplicación."
 echo "=============================================="

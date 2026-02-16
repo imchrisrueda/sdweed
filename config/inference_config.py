@@ -39,22 +39,46 @@ class InferenceConfig:
     # Parámetros de generación por defecto
     DEFAULT_INFERENCE_PARAMS: Dict[str, Any] = {
         "num_inference_steps": 30,
-        "guidance_scale": 7.5,
+        "guidance_scale": 7.0,
         "height": 512,
         "width": 512,
     }
     
     # Parámetros de LoRA
-    LORA_ADAPTER_WEIGHTS = [0.3]  # Peso de influencia del LoRA (rango típico: 0.1-0.6)
+    LORA_ADAPTER_WEIGHTS = [1.0]  # Peso de influencia del LoRA (1.0 = máxima influencia)
     
-    # Prompt base para generación
-    DEFAULT_PROMPT = (
-        "aerial drone photograph, top-down view, agricultural field, "
-        "natural soil texture, realistic, sorghum plant, early growth stage"
+    # Prompt optimizado para generación de plántulas de sorgo (nadir orthophoto)
+    # Condensado para cumplir límite de 77 tokens de CLIP manteniendo características clave
+    OPTIMIZED_SORGHUM_PROMPT = (
+        "true nadir orthophoto, camera perpendicular to ground, "
+        "single sorghum seedling centered, monocot grass, 4-7 narrow linear leaves, "
+        "parallel venation, plant 20% of image, sharp focus, natural matte green, "
+        "bare soil background, fine granular texture, diffuse daylight, "
+        "realistic agronomy photo, neutral color, low saturation"
     )
     
-    # Seed para reproducibilidad
-    DEFAULT_SEED = 1234
+    # Prompts alternativos plant-centric (enfoque en planta individual)
+    DEFAULT_PROMPTS = [
+        OPTIMIZED_SORGHUM_PROMPT,
+        "realistic plant photo, single maize plant, centered subject, close-up crop, soil background, natural light, sharp focus, high detail",
+        "realistic plant photo, single atriplex plant, centered subject, close-up crop, soil background, natural light, sharp focus, high detail",
+        "macro plant photo, single seedling, centered subject, soil background, natural light, realistic texture, sharp focus"
+    ]
+    
+    # Prompt base para generación (optimizado de sorghum)
+    DEFAULT_PROMPT = OPTIMIZED_SORGHUM_PROMPT
+    
+    # Negative prompt detallado para evitar características no deseadas
+    # Optimizado para cumplir límite de 77 tokens de CLIP
+    NEGATIVE_PROMPT = (
+        "aerial field, panorama, horizon, landscape, multiple plants, weeds, "
+        "broadleaf, dicot, lobed leaf, reticulate venation, branches, flower, "
+        "pot, studio, bokeh, straw, hay, wood grain, fabric, watermark, text"
+    )
+    
+    # Seeds para reproducibilidad
+    DEFAULT_SEED = 123
+    DEFAULT_SEEDS = [123, 999]
     
     @classmethod
     def validate_paths(cls) -> None:
